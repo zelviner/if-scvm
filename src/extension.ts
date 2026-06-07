@@ -164,6 +164,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 
 			output.appendLine('[INFO] args: ' + JSON.stringify(args));
+			const startTime = Date.now();
 			const child = spawn(exePath, args);
 			let stdoutBuffer = '';
 
@@ -226,7 +227,12 @@ export function activate(context: vscode.ExtensionContext) {
 			// exit
 			child.on(
 				'close',
-				code => { output.appendLine(`[INFO] process exit: ${code}`); }
+				code => {
+					const elapsed = Date.now() - startTime;
+					const sec = (elapsed / 1000).toFixed(3);
+					output.appendLine(`[INFO] process exit: ${code}`);
+					output.appendLine(`[INFO] elapsed: ${sec}s`);
+				}
 			);
 
 			// error
