@@ -2,7 +2,7 @@
   "name": "if-scvm",
   "displayName": "IF SCVM",
   "description": "IF 智能卡脚本语言虚拟机",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "zelvin",
   "icon": "images/logo.png",
   "engines": {
