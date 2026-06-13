@@ -2,9 +2,9 @@
   "name": "if-scvm",
   "displayName": "IF SCVM",
   "description": "IF 智能卡脚本语言虚拟机",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "zelvin",
-  "icon": "images/logo.png",
+  "icon": "images/logo-v4.png",
   "engines": {
     "vscode": "^1.120.0"
   },
@@ -87,6 +87,11 @@
           "type": "string",
           "default": "",
           "description": "Perso data file"
+        },
+        "if-scvm.checkOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check saved scripts when card_device_server supports --compile"
         }
       }
     },

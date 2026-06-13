@@ -3,70 +3,51 @@
   "name": "IF Card",
   "scopeName": "source.if",
   "patterns": [
-    {
-      "include": "#keywords"
-    },
-    {
-      "include": "#types"
-    },
-    {
-      "include": "#numbers"
-    },
-    {
-      "include": "#strings"
-    },
-    {
-      "include": "#comments"
-    },
-    {
-      "include": "#functions"
-    },
-    {
-      "include": "#operators"
-    },
-    {
-      "include": "#rst"
-    },
-    {
-      "include": "#pps"
-    },
-    {
-      "include": "#status-word"
-    },
-    {
-      "include": "#apdu-string"
-    }
+    { "include": "#comments" },
+    { "include": "#import" },
+    { "include": "#apdu-strings" },
+    { "include": "#strings" },
+    { "include": "#function-declarations" },
+    { "include": "#keywords" },
+    { "include": "#constants" },
+    { "include": "#builtins" },
+    { "include": "#methods" },
+    { "include": "#function-calls" },
+    { "include": "#numbers" },
+    { "include": "#operators" }
   ],
   "repository": {
-    "keywords": {
+    "comments": {
+      "patterns": [
+        { "name": "comment.line.double-slash.if", "begin": "//", "end": "$" },
+        { "name": "comment.block.if", "begin": "/\\*", "end": "\\*/" }
+      ]
+    },
+    "import": {
       "patterns": [
         {
-          "name": "keyword.control.if",
-          "match": "\\b(if|else|for|return|break|continue|switch|case|default|func|var|const|import|struct|true|false|null|as)\\b"
+          "name": "meta.import.if",
+          "match": "\\b(import)\\s+(['\"])([^'\"]+)(\\2)",
+          "captures": {
+            "1": { "name": "keyword.control.import.if" },
+            "2": { "name": "punctuation.definition.string.begin.if" },
+            "3": { "name": "string.quoted.other.filename.if" },
+            "4": { "name": "punctuation.definition.string.end.if" }
+          }
         }
       ]
     },
-    "types": {
+    "apdu-strings": {
       "patterns": [
         {
-          "name": "storage.type.if",
-          "match": "\\b(int|int8|int16|int32|int64|string|bool|float|float32|float64|byte|bytes|array|map)\\b"
-        }
-      ]
-    },
-    "functions": {
-      "patterns": [
+          "name": "string.quoted.apdu-command.if",
+          "match": "(['\"])([0-9A-Fa-f]+)(\\1)(?=\\s*->)",
+          "captures": { "2": { "name": "constant.numeric.hex.if" } }
+        },
         {
-          "name": "entity.name.function.if",
-          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()"
-        }
-      ]
-    },
-    "numbers": {
-      "patterns": [
-        {
-          "name": "constant.numeric.if",
-          "match": "\\b(0x[0-9A-Fa-f]+|\\d+)\\b"
+          "name": "string.quoted.apdu-status.if",
+          "match": "(['\"])([0-9A-Fa-fXx*]+)(\\1)",
+          "captures": { "2": { "name": "constant.language.status.if" } }
         }
       ]
     },
@@ -75,67 +56,72 @@
         {
           "name": "string.quoted.double.if",
           "begin": "\"",
-          "end": "\""
+          "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.if" } },
+          "end": "\"",
+          "endCaptures": { "0": { "name": "punctuation.definition.string.end.if" } },
+          "patterns": [{ "name": "constant.character.escape.if", "match": "\\\\[ntr\\\\\"]" }]
+        },
+        {
+          "name": "string.quoted.single.if",
+          "begin": "'",
+          "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.if" } },
+          "end": "'",
+          "endCaptures": { "0": { "name": "punctuation.definition.string.end.if" } },
+          "patterns": [{ "name": "constant.character.escape.if", "match": "\\\\'" }]
         }
       ]
     },
-    "comments": {
+    "function-declarations": {
       "patterns": [
         {
-          "name": "comment.line.double-slash.if",
-          "match": "//.*$"
-        },
-        {
-          "name": "comment.block.if",
-          "begin": "/\\*",
-          "end": "\\*/"
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(?==\\s*func\\b)",
+          "captures": { "1": { "name": "entity.name.function.if" } }
         }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        { "name": "keyword.control.if", "match": "\\b(if|else|while|for|in|switch|case|default|break|continue|return|import)\\b" },
+        { "name": "storage.type.function.if", "match": "\\bfunc\\b" }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        { "name": "constant.language.if", "match": "\\b(true|false|null)\\b" },
+        { "name": "support.constant.card.if", "match": "\\b(RST|PPS)\\b" }
+      ]
+    },
+    "builtins": {
+      "patterns": [
+        { "name": "support.function.builtin.if", "match": "\\b(print|type|len|int|float|str|exit|panic|sleep)\\b(?=\\s*\\()" },
+        { "name": "support.class.builtin.if", "match": "\\b(crypto|tlv)\\b" }
+      ]
+    },
+    "methods": {
+      "patterns": [
+        {
+          "name": "support.function.method.if",
+          "match": "(?<=\\.)\\b(randomHex|cipher|TDesMac|aesCbcMac|aesCmac|milenage|parse|find|len|upper|lower|split|index|prefix|suffix|trim|repeat|replace|mid|xor|toHexString|toAsciiString|append|pop|shift|insert|remove|clear|extend|join|json|copy|has|get|set|keys|values|update)\\b(?=\\s*\\()"
+        },
+        { "name": "variable.other.property.if", "match": "(?<=\\.)\\b[A-Za-z_][A-Za-z0-9_]*\\b" }
+      ]
+    },
+    "function-calls": {
+      "patterns": [
+        { "name": "entity.name.function.call.if", "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b(?=\\s*\\()" }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        { "name": "constant.numeric.float.if", "match": "(?<![A-Za-z0-9_])\\d+\\.\\d+(?![A-Za-z0-9_])" },
+        { "name": "constant.numeric.integer.if", "match": "(?<![A-Za-z0-9_])\\d+(?![A-Za-z0-9_])" }
       ]
     },
     "operators": {
       "patterns": [
         {
           "name": "keyword.operator.if",
-          "match": "->|\\+"
-        }
-      ]
-    },
-    "rst": {
-      "patterns": [
-        {
-          "name": "support.function.rst.if",
-          "match": "\\bRST\\b"
-        }
-      ]
-    },
-    "pps": {
-      "patterns": [
-        {
-          "name": "support.function.pps.if",
-          "match": "\\bPPS\\b"
-        }
-      ]
-    },
-    "apdu-string": {
-      "patterns": [
-        {
-          "name": "string.quoted.apdu.if",
-          "begin": "\"",
-          "end": "\"",
-          "patterns": [
-            {
-              "name": "constant.numeric.hex.if",
-              "match": "[0-9A-Fa-f]{2}"
-            }
-          ]
-        }
-      ]
-    },
-    "status-word": {
-      "patterns": [
-        {
-          "name": "constant.language.status.if",
-          "match": "\"\\*[0-9A-Fa-f]{4}\""
+          "match": "<<=|>>=|\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=|->|\\+\\+|--|<<|>>|<=|>=|==|!=|&&|\\|\\||[+\\-*/%~&|^<>=!?:]"
         }
       ]
     }

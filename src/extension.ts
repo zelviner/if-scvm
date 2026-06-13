@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import { getReaders } from './reader';
+import { DiagnosticManager } from './diagnostics';
+import { registerLanguageFeatures } from './language';
 
 export function activate(context: vscode.ExtensionContext) {
 	let currentReader: any = undefined;
@@ -12,7 +14,10 @@ export function activate(context: vscode.ExtensionContext) {
 		{ value: 3, label: 'PT/SC' }
 	];
 
+	const exePath = path.join(context.extensionPath, 'bin', 'card-device-server.exe');
 	const output = vscode.window.createOutputChannel('IF SCVM');
+	const diagnostics = new DiagnosticManager(exePath, output);
+	registerLanguageFeatures(context);
 	const readerTypeStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
 	const readerStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
 
@@ -30,7 +35,16 @@ export function activate(context: vscode.ExtensionContext) {
 	readerStatusBar.tooltip = 'Current Card Reader';
 	readerStatusBar.show();
 
-	const exePath = path.join(context.extensionPath, 'bin', 'card_device_server.exe');
+	const checkOnSave = vscode.workspace.getConfiguration('if-scvm').get<boolean>('checkOnSave', true);
+	void diagnostics.supportsCompile().then(supported => {
+		if (!supported) {
+			output.appendLine('[INFO] save diagnostics require card_device_server --compile support');
+			return;
+		}
+		if (checkOnSave) {
+			context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(document => { diagnostics.compile(document); }));
+		}
+	});
 
 	// 选择读卡器类型
 	async function selectReaderType() {
@@ -112,7 +126,8 @@ export function activate(context: vscode.ExtensionContext) {
 	// 运行脚本
 	const runCmd = vscode.commands.registerCommand(
 		'if-scvm.run',
-		async (uri: vscode.Uri) => {
+		async (uri?: vscode.Uri) => {
+			uri ??= vscode.window.activeTextEditor?.document.uri;
 			if (!uri) {
 				vscode.window.showErrorMessage('No script file selected');
 				return;
@@ -120,6 +135,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 			output.clear();
 			output.show(true);
+			diagnostics.clear();
 
 			output.appendLine('[INFO] start script');
 			output.appendLine(`[INFO] exe: ${exePath}`);
@@ -183,6 +199,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 						try {
 							const obj = JSON.parse(line);
+							diagnostics.addJson(obj);
 
 							switch (obj.type) {
 								case 'info':
@@ -244,6 +261,8 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(readerTypeStatusBar);
 	context.subscriptions.push(selectReaderTypeCmd);
 	context.subscriptions.push(readerStatusBar);
+	context.subscriptions.push(output);
+	context.subscriptions.push(diagnostics);
 }
 
 export function deactivate() { }

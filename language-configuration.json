@@ -55,5 +55,9 @@
             "\"",
             "\""
         ]
-    ]
+    ],
+    "indentationRules": {
+        "increaseIndentPattern": "^.*\\{[^}'\\\"]*$",
+        "decreaseIndentPattern": "^\\s*\\}"
+    }
 }
