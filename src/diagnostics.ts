@@ -97,9 +97,7 @@ export class DiagnosticManager implements vscode.Disposable {
 			'--compile',
 			'--json',
 			'--script',
-			document.uri.fsPath,
-			'--convert',
-			String(config.get<boolean>('convert', false))
+			document.uri.fsPath
 		];
 		const dataFile = config.get<string>('dataFile', '');
 		if (dataFile) {

@@ -123,6 +123,68 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	);
 
+	async function convertScript(uri: vscode.Uri | undefined, flag: '--convert-telecom' | '--convert-finance', label: string) {
+		uri ??= vscode.window.activeTextEditor?.document.uri;
+		if (!uri) {
+			vscode.window.showErrorMessage('No script file selected');
+			return;
+		}
+
+		const document = vscode.workspace.textDocuments.find(item => item.uri.toString() === uri.toString());
+		if (document?.isDirty && !await document.save()) {
+			vscode.window.showErrorMessage('Save the script before converting it');
+			return;
+		}
+
+		output.clear();
+		output.show(true);
+		output.appendLine(`[INFO] convert ${label.toLowerCase()} script`);
+		output.appendLine(`[INFO] script: ${uri.fsPath}`);
+
+		const args = ['--json', '--script', uri.fsPath, flag, 'true'];
+		output.appendLine('[INFO] args: ' + JSON.stringify(args));
+		const child = spawn(exePath, args);
+		let stdout = '';
+
+		child.stdout.on('data', buffer => { stdout += buffer.toString(); });
+		child.stderr.on('data', buffer => { output.appendLine('[STDERR] ' + buffer.toString()); });
+		child.on('error', error => {
+			output.appendLine(`[ERROR] ${error.message}`);
+			vscode.window.showErrorMessage(`${label} script conversion failed`);
+		});
+		child.on('close', code => {
+			for (const line of stdout.split(/\r?\n/)) {
+				if (!line.trim()) {
+					continue;
+				}
+
+				try {
+					const result = JSON.parse(line) as { type?: string; message?: string };
+					output.appendLine(`[${(result.type ?? 'info').toUpperCase()}] ${result.message ?? line}`);
+				} catch {
+					output.appendLine(line);
+				}
+			}
+
+			output.appendLine(`[INFO] process exit: ${code}`);
+			if (code === 0) {
+				vscode.window.showInformationMessage(`${label} script converted`);
+			} else {
+				vscode.window.showErrorMessage(`${label} script conversion failed`);
+			}
+		});
+	}
+
+	const convertTelecomCmd = vscode.commands.registerCommand(
+		'if-scvm.convertTelecom',
+		async (uri?: vscode.Uri) => { await convertScript(uri, '--convert-telecom', 'Telecom'); }
+	);
+
+	const convertFinanceCmd = vscode.commands.registerCommand(
+		'if-scvm.convertFinance',
+		async (uri?: vscode.Uri) => { await convertScript(uri, '--convert-finance', 'Finance'); }
+	);
+
 	// 运行脚本
 	const runCmd = vscode.commands.registerCommand(
 		'if-scvm.run',
@@ -144,7 +206,6 @@ export function activate(context: vscode.ExtensionContext) {
 			const config = vscode.workspace.getConfiguration('if-scvm');
 			const readerType = config.get<number>('readerType', 0);
 			const protocol = config.get<number>('protocol', 1);
-			const convert = config.get<boolean>('convert', false);
 			const dataFile = config.get<string>('dataFile', '');
 
 			// 如果还没选择读卡器
@@ -169,10 +230,7 @@ export function activate(context: vscode.ExtensionContext) {
 				String(currentReader.index),
 
 				'--protocol',
-				String(protocol),
-
-				'--convert',
-				String(convert)
+				String(protocol)
 			];
 
 			if (dataFile) {
@@ -257,6 +315,8 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(runCmd);
+	context.subscriptions.push(convertTelecomCmd);
+	context.subscriptions.push(convertFinanceCmd);
 	context.subscriptions.push(selectReaderCmd);
 	context.subscriptions.push(readerTypeStatusBar);
 	context.subscriptions.push(selectReaderTypeCmd);
