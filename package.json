@@ -2,7 +2,7 @@
   "name": "if-scvm",
   "displayName": "IF SCVM",
   "description": "IF 智能卡脚本语言虚拟机",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "zelvin",
   "icon": "images/logo-v4.png",
   "engines": {
@@ -18,6 +18,14 @@
       {
         "command": "if-scvm.run",
         "title": "Run IF Script"
+      },
+      {
+        "command": "if-scvm.selectDataFile",
+        "title": "Use as Perso Data"
+      },
+      {
+        "command": "if-scvm.clearDataFile",
+        "title": "Clear Perso Data"
       },
       {
         "command": "if-scvm.selectReader",
@@ -48,6 +56,11 @@
           "command": "if-scvm.convertFinance",
           "group": "ifscvm@3",
           "when": "resourceExtname == .if"
+        },
+        {
+          "command": "if-scvm.selectDataFile",
+          "group": "ifscvm@4",
+          "when": "resourceExtname == .prd"
         }
       ],
       "editor/context": [
@@ -105,11 +118,6 @@
             "GP"
           ],
           "description": "Card protocol"
-        },
-        "if-scvm.dataFile": {
-          "type": "string",
-          "default": "",
-          "description": "Perso data file"
         },
         "if-scvm.checkOnSave": {
           "type": "boolean",

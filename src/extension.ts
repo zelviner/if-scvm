@@ -7,6 +7,7 @@ import { registerLanguageFeatures } from './language';
 
 export function activate(context: vscode.ExtensionContext) {
 	let currentReader: any = undefined;
+	let currentDataFile: vscode.Uri | undefined;
 	const readerTypes = [
 		{ value: 0, label: 'PC/SC' },
 		{ value: 1, label: 'Q/SC' },
@@ -20,6 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
 	registerLanguageFeatures(context);
 	const readerTypeStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
 	const readerStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+	const dataFileStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
 
 	const config = vscode.workspace.getConfiguration('if-scvm');
 	const currentReaderType = config.get<number>('readerType', 0);
@@ -35,6 +37,10 @@ export function activate(context: vscode.ExtensionContext) {
 	readerStatusBar.tooltip = 'Current Card Reader';
 	readerStatusBar.show();
 
+	dataFileStatusBar.command = 'if-scvm.selectDataFile';
+	updateDataFileStatusBar();
+	dataFileStatusBar.show();
+
 	const checkOnSave = vscode.workspace.getConfiguration('if-scvm').get<boolean>('checkOnSave', true);
 	void diagnostics.supportsCompile().then(supported => {
 		if (!supported) {
@@ -42,7 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 		if (checkOnSave) {
-			context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(document => { diagnostics.compile(document); }));
+			context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(document => { diagnostics.compile(document, currentDataFile?.fsPath); }));
 		}
 	});
 
@@ -107,6 +113,49 @@ export function activate(context: vscode.ExtensionContext) {
 		return selected.reader;
 	}
 
+	function updateDataFileStatusBar() {
+		if (currentDataFile) {
+			dataFileStatusBar.text = `$(database) ${path.basename(currentDataFile.fsPath)}`;
+			dataFileStatusBar.tooltip = `Current perso data: ${currentDataFile.fsPath}\nClick to select another data file`;
+			return;
+		}
+
+		dataFileStatusBar.text = '$(database) No Data';
+		dataFileStatusBar.tooltip = 'Click to select a perso data file';
+	}
+
+	async function selectDataFile(uri?: vscode.Uri) {
+		if (!uri) {
+			const selected = await vscode.window.showOpenDialog({
+				canSelectFiles: true,
+				canSelectFolders: false,
+				canSelectMany: false,
+				filters: { 'Perso Data': ['prd'] },
+				title: 'Select perso data file'
+			});
+			uri = selected?.[0];
+		}
+
+		if (!uri) {
+			return;
+		}
+
+		if (path.extname(uri.fsPath).toLowerCase() !== '.prd') {
+			vscode.window.showErrorMessage('Perso data file must use the .prd extension');
+			return;
+		}
+
+		currentDataFile = uri;
+		updateDataFileStatusBar();
+		output.appendLine(`[INFO] perso data: ${uri.fsPath}`);
+	}
+
+	function clearDataFile() {
+		currentDataFile = undefined;
+		updateDataFileStatusBar();
+		output.appendLine('[INFO] perso data cleared');
+	}
+
 	// 状态栏点击
 	const selectReaderTypeCmd = vscode.commands.registerCommand(
 		'if-scvm.selectReaderType',
@@ -121,6 +170,18 @@ export function activate(context: vscode.ExtensionContext) {
 		async () => {
 			await selectReader();
 		}
+	);
+
+	const selectDataFileCmd = vscode.commands.registerCommand(
+		'if-scvm.selectDataFile',
+		async (uri?: vscode.Uri) => {
+			await selectDataFile(uri);
+		}
+	);
+
+	const clearDataFileCmd = vscode.commands.registerCommand(
+		'if-scvm.clearDataFile',
+		() => { clearDataFile(); }
 	);
 
 	async function convertScript(uri: vscode.Uri | undefined, flag: '--convert-telecom' | '--convert-finance', label: string) {
@@ -206,7 +267,6 @@ export function activate(context: vscode.ExtensionContext) {
 			const config = vscode.workspace.getConfiguration('if-scvm');
 			const readerType = config.get<number>('readerType', 0);
 			const protocol = config.get<number>('protocol', 1);
-			const dataFile = config.get<string>('dataFile', '');
 
 			// 如果还没选择读卡器
 			if (!currentReader) {
@@ -233,8 +293,8 @@ export function activate(context: vscode.ExtensionContext) {
 				String(protocol)
 			];
 
-			if (dataFile) {
-				args.push('--data', dataFile);
+			if (currentDataFile) {
+				args.push('--data', currentDataFile.fsPath);
 			}
 
 			output.appendLine('[INFO] args: ' + JSON.stringify(args));
@@ -318,9 +378,12 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(convertTelecomCmd);
 	context.subscriptions.push(convertFinanceCmd);
 	context.subscriptions.push(selectReaderCmd);
+	context.subscriptions.push(selectDataFileCmd);
+	context.subscriptions.push(clearDataFileCmd);
 	context.subscriptions.push(readerTypeStatusBar);
 	context.subscriptions.push(selectReaderTypeCmd);
 	context.subscriptions.push(readerStatusBar);
+	context.subscriptions.push(dataFileStatusBar);
 	context.subscriptions.push(output);
 	context.subscriptions.push(diagnostics);
 }

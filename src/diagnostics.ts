@@ -83,7 +83,7 @@ export class DiagnosticManager implements vscode.Disposable {
 		});
 	}
 
-	compile(document: vscode.TextDocument): void {
+	compile(document: vscode.TextDocument, dataFile?: string): void {
 		if (document.languageId !== 'if' || document.isUntitled) {
 			return;
 		}
@@ -92,14 +92,12 @@ export class DiagnosticManager implements vscode.Disposable {
 		this.compilations.get(key)?.kill();
 		this.collection.clear();
 
-		const config = vscode.workspace.getConfiguration('if-scvm');
 		const args = [
 			'--compile',
 			'--json',
 			'--script',
 			document.uri.fsPath
 		];
-		const dataFile = config.get<string>('dataFile', '');
 		if (dataFile) {
 			args.push('--data', dataFile);
 		}
