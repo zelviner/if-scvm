@@ -8,6 +8,7 @@ import { registerLanguageFeatures } from './language';
 export function activate(context: vscode.ExtensionContext) {
 	let currentReader: any = undefined;
 	let currentDataFile: vscode.Uri | undefined;
+	let currentDataFileHasDs = true;
 	const readerTypes = [
 		{ value: 0, label: 'PC/SC' },
 		{ value: 1, label: 'Q/SC' },
@@ -48,7 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 		if (checkOnSave) {
-			context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(document => { diagnostics.compile(document, currentDataFile?.fsPath); }));
+			context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(document => { diagnostics.compile(document, currentDataFile?.fsPath, currentDataFileHasDs); }));
 		}
 	});
 
@@ -130,7 +131,7 @@ export function activate(context: vscode.ExtensionContext) {
 				canSelectFiles: true,
 				canSelectFolders: false,
 				canSelectMany: false,
-				filters: { 'Perso Data': ['prd'] },
+				filters: { 'Perso Data': ['prd', 'xh'] },
 				title: 'Select perso data file'
 			});
 			uri = selected?.[0];
@@ -140,18 +141,28 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		if (path.extname(uri.fsPath).toLowerCase() !== '.prd') {
-			vscode.window.showErrorMessage('Perso data file must use the .prd extension');
+		if (!['.prd', '.xh'].includes(path.extname(uri.fsPath).toLowerCase())) {
+			vscode.window.showErrorMessage('Perso data file must use the .prd or .xh extension');
+			return;
+		}
+
+		const ds = await vscode.window.showQuickPick([
+			{ label: 'Yes', description: 'Expose data through ds', value: true },
+			{ label: 'No', description: 'Expose data as top-level variables', value: false }
+		], { placeHolder: 'Does this perso data file have DS?' });
+		if (!ds) {
 			return;
 		}
 
 		currentDataFile = uri;
+		currentDataFileHasDs = ds.value;
 		updateDataFileStatusBar();
-		output.appendLine(`[INFO] perso data: ${uri.fsPath}`);
+		output.appendLine(`[INFO] perso data: ${uri.fsPath}, has DS: ${currentDataFileHasDs}`);
 	}
 
 	function clearDataFile() {
 		currentDataFile = undefined;
+		currentDataFileHasDs = true;
 		updateDataFileStatusBar();
 		output.appendLine('[INFO] perso data cleared');
 	}
@@ -294,7 +305,7 @@ export function activate(context: vscode.ExtensionContext) {
 			];
 
 			if (currentDataFile) {
-				args.push('--data', currentDataFile.fsPath);
+				args.push('--data', currentDataFile.fsPath, '--has-ds', String(currentDataFileHasDs));
 			}
 
 			output.appendLine('[INFO] args: ' + JSON.stringify(args));

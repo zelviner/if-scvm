@@ -83,7 +83,7 @@ export class DiagnosticManager implements vscode.Disposable {
 		});
 	}
 
-	compile(document: vscode.TextDocument, dataFile?: string): void {
+	compile(document: vscode.TextDocument, dataFile?: string, hasDs = true): void {
 		if (document.languageId !== 'if' || document.isUntitled) {
 			return;
 		}
@@ -99,7 +99,7 @@ export class DiagnosticManager implements vscode.Disposable {
 			document.uri.fsPath
 		];
 		if (dataFile) {
-			args.push('--data', dataFile);
+			args.push('--data', dataFile, '--has-ds', String(hasDs));
 		}
 
 		const child = spawn(this.exePath, args);
