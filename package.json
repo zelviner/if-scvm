@@ -4,7 +4,7 @@
   "description": "IF 智能卡脚本语言虚拟机",
   "version": "0.0.9",
   "publisher": "zelvin",
-  "icon": "images/logo-v4.png",
+  "icon": "images/logo.png",
   "engines": {
     "vscode": "^1.120.0"
   },
@@ -123,6 +123,11 @@
           "type": "boolean",
           "default": true,
           "description": "Check saved scripts when card_device_server supports --compile"
+        },
+        "if-scvm.showCardLogs": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show card reset and APDU logs; script.print logs are always shown"
         }
       }
     },

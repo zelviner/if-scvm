@@ -62,6 +62,7 @@ const objectEntries: Record<string, LanguageEntry[]> = {
 	],
 	tlv: [
 		entry('parse', 'tlv.parse(hex)', 'Parse BER-TLV hexadecimal data.', ['hex']),
+		entry('serialize', 'tlv.serialize(nodes)', 'Encode TLV nodes as BER-TLV hexadecimal data.', ['nodes']),
 		entry('find', 'tlv.find(nodes, tag)', 'Find the first matching tag recursively.', ['nodes', 'tag'])
 	]
 };
@@ -122,6 +123,17 @@ function completionItem(item: LanguageEntry): vscode.CompletionItem {
 	completion.documentation = new vscode.MarkdownString(item.documentation);
 	completion.insertText = item.insertText;
 	return completion;
+}
+
+function documentWordCompletionItems(document: vscode.TextDocument, knownLabels: Set<string>): vscode.CompletionItem[] {
+	const words = new Set(document.getText().match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? []);
+	return [...words]
+		.filter(word => !knownLabels.has(word))
+		.map(word => {
+			const completion = new vscode.CompletionItem(word, vscode.CompletionItemKind.Text);
+			completion.detail = 'Text from this document';
+			return completion;
+		});
 }
 
 function entryAt(document: vscode.TextDocument, position: vscode.Position): LanguageEntry | undefined {
@@ -200,7 +212,12 @@ export function registerLanguageFeatures(context: vscode.ExtensionContext): void
 			const prefix = document.lineAt(position).text.slice(0, position.character);
 			const qualifier = prefix.match(/([A-Za-z_][A-Za-z0-9_]*)\.\w*$/)?.[1];
 			const entries = qualifier ? objectEntries[qualifier] ?? methodEntries : allEntries;
-			return entries.map(completionItem);
+			const items = entries.map(completionItem);
+			if (qualifier) {
+				return items;
+			}
+
+			return [...items, ...documentWordCompletionItems(document, new Set(entries.map(item => item.label)))];
 		}
 	}, '.'));
 

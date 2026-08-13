@@ -278,6 +278,7 @@ export function activate(context: vscode.ExtensionContext) {
 			const config = vscode.workspace.getConfiguration('if-scvm');
 			const readerType = config.get<number>('readerType', 0);
 			const protocol = config.get<number>('protocol', 1);
+			const showCardLogs = config.get<boolean>('showCardLogs', true);
 
 			// 如果还没选择读卡器
 			if (!currentReader) {
@@ -303,6 +304,7 @@ export function activate(context: vscode.ExtensionContext) {
 				'--protocol',
 				String(protocol)
 			];
+			args.push('--show-card-logs', String(showCardLogs));
 
 			if (currentDataFile) {
 				args.push('--data', currentDataFile.fsPath, '--has-ds', String(currentDataFileHasDs));
