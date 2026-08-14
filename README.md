@@ -15,6 +15,7 @@ Card Script 是一门面向智能卡测试、APDU 交互和卡片数据处理的
 - 数据工具：字符串、列表、哈希表方法以及 BER-TLV 解析。
 - 密码工具：3DES、AES、MAC、CMAC 和 Milenage。
 - 源码定位：语法错误、导入错误和卡片事件携带文件及行号信息。
+- VS Code 编辑支持：内置对象补全、签名提示和“格式化文档”。保存 `.if` 文件会自动格式化；格式化使用 4 空格缩进，统一运算符、逗号与括号周围的空格，并最多保留一个连续空行。多行列表和哈希表会逐层缩进，连续的行尾 `//` 注释会对齐。含 `->` 的 APDU 和 `RST` 表达式会合并为一行，不受长度限制。
 
 ## 构建
 
@@ -105,7 +106,7 @@ func return
 import
 ```
 
-`RST`、`PPS`、`crypto` 和 `tlv` 是预定义内置对象，不是普通关键字。
+`RST`、`PPS`、`crypto`、`tlv` 和 `data` 是预定义内置对象，不是普通关键字。
 
 ### 注释
 
@@ -163,7 +164,7 @@ decimal = 3.1415
 | 列表 | `list` | `[1, "A", true]` |
 | 哈希表 | `hash` | `{"name": "card"}` |
 | 函数闭包 | `closure` | `func(x) { return x }` |
-| 内置对象 | `builtin` | `print`、`crypto` |
+| 内置对象 | `builtin` | `print`、`crypto`、`tlv`、`data` |
 
 只有 `false` 和 `null` 在条件判断中为假；其他值均为真，包括 `0`、空字符串和空列表。
 
@@ -833,8 +834,28 @@ mac = crypto.TDesMac(data, key, "0000000000000000")
 | `children` | 列表 | 构造型 TLV 的子节点；没有子节点时字段不存在 |
 
 ```card-script
-nodes = tlv.parse("6F0A8408A0000000031010")
+nodes = tlv.parse("6F098407A0000000031010")
 print(nodes.json())
+```
+
+### `tlv.serialize(nodes)`
+
+将 TLV 对象列表编码为 BER-TLV 十六进制字符串。输入结构与 `tlv.parse` 的返回值兼容；`length` 会根据实际编码内容重新计算，无需也不会使用传入值。
+
+- 每个节点必须有非空字符串字段 `tag`。
+- 原始型 Tag 必须有字符串字段 `value`，且不能有 `children`。
+- 构造型 Tag 的内容来自可选的 `children` 列表；其 `value` 字段不会参与编码。
+
+```card-script
+nodes = [{
+    "tag": "E1",
+    "children": [
+        {"tag": "9F33", "value": "1234"}
+    ]
+}]
+
+encoded = tlv.serialize(nodes)
+print(encoded) // "E1059F33021234"
 ```
 
 ### `tlv.find(nodes, tag)`
@@ -847,6 +868,24 @@ aid = tlv.find(nodes, "84")
 if aid != null {
     print(aid.value)
 }
+```
+
+## `data` 内置对象
+
+### `data.parse(hex)`
+
+将十六进制字符串中的字段数据解析为哈希表。输入字节从第一个 `0x00` 开始会被视为填充并忽略；有效内容可以是以下两种形式：
+
+- JSON 对象，且 `message` 字段为字符串，例如 `{"message":"[Head]V1.0[KEY01]XXX"}`。
+- 直接的字段串，例如 `[Head]V1.0[KEY01]XXX`。
+
+字段串由一个或多个 `[字段名]值` 片段组成。字段名不能为空，值为当前 `]` 后到下一个 `[` 前的全部文本；同名字段出现多次时，以最后一次的值为准。返回的哈希表键和值均为字符串。
+
+```card-script
+// {"message":"[Head]V1.0[KEY01]XXX[CRC]0C43"}，末尾含 0x00 填充
+parsed = data.parse("7B226D657373616765223A225B486561645D56312E305B4B455930315D5858585B4352435D30433433227D00000000")
+
+print(parsed.Head, parsed.KEY01, parsed.CRC) // "V1.0 XXX 0C43"
 ```
 
 ## C++ 嵌入接口

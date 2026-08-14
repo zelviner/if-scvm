@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { formatCardScript } from './formatter';
 
 interface LanguageEntry {
 	label: string;
@@ -36,7 +37,8 @@ const valueEntries: LanguageEntry[] = [
 	{ label: 'RST', detail: 'card reset operation', documentation: 'Reset the card and return its ATR.', kind: vscode.CompletionItemKind.Constant },
 	{ label: 'PPS', detail: 'PPS operation', documentation: 'Perform protocol and parameter selection.', kind: vscode.CompletionItemKind.Constant },
 	{ label: 'crypto', detail: 'cryptography built-in object', documentation: 'Cryptography helper methods.', kind: vscode.CompletionItemKind.Module },
-	{ label: 'tlv', detail: 'BER-TLV built-in object', documentation: 'BER-TLV parsing and lookup helpers.', kind: vscode.CompletionItemKind.Module }
+	{ label: 'tlv', detail: 'BER-TLV built-in object', documentation: 'BER-TLV parsing and lookup helpers.', kind: vscode.CompletionItemKind.Module },
+	{ label: 'data', detail: 'perso data built-in object', documentation: 'Perso data parsing helpers.', kind: vscode.CompletionItemKind.Module }
 ];
 
 const functionEntries: LanguageEntry[] = [
@@ -64,6 +66,9 @@ const objectEntries: Record<string, LanguageEntry[]> = {
 		entry('parse', 'tlv.parse(hex)', 'Parse BER-TLV hexadecimal data.', ['hex']),
 		entry('serialize', 'tlv.serialize(nodes)', 'Encode TLV nodes as BER-TLV hexadecimal data.', ['nodes']),
 		entry('find', 'tlv.find(nodes, tag)', 'Find the first matching tag recursively.', ['nodes', 'tag'])
+	],
+	data: [
+		entry('parse', 'data.parse(hex)', 'Parse hexadecimal perso data into a hash of fields.', ['hex'])
 	]
 };
 
@@ -249,4 +254,30 @@ export function registerLanguageFeatures(context: vscode.ExtensionContext): void
 			return help;
 		}
 	}, '(', ','));
+
+	context.subscriptions.push(vscode.workspace.onWillSaveTextDocument(event => {
+		if (event.document.languageId !== 'if' || event.document.uri.scheme !== 'file') {
+			return;
+		}
+		event.waitUntil(Promise.resolve(documentFormattingEdits(event.document)));
+	}));
+
+	context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(selector, {
+		provideDocumentFormattingEdits(document) {
+			return documentFormattingEdits(document);
+		}
+	}));
+}
+
+function documentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
+	const formatted = formatCardScript(document.getText(), document.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n');
+	if (formatted === document.getText()) {
+		return [];
+	}
+	return [vscode.TextEdit.replace(fullDocumentRange(document), formatted)];
+}
+
+function fullDocumentRange(document: vscode.TextDocument): vscode.Range {
+	const lastLine = document.lineCount - 1;
+	return new vscode.Range(0, 0, lastLine, document.lineAt(lastLine).text.length);
 }
