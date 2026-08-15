@@ -2,7 +2,7 @@
   "name": "if-scvm",
   "displayName": "IF SCVM",
   "description": "IF 智能卡脚本语言虚拟机",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "zelvin",
   "icon": "images/logo.png",
   "engines": {
@@ -45,17 +45,17 @@
         {
           "command": "if-scvm.run",
           "group": "ifscvm@1",
-          "when": "resourceExtname == .if"
+          "when": "resourceExtname == .if || resourceExtname == .card"
         },
         {
           "command": "if-scvm.convertTelecom",
           "group": "ifscvm@2",
-          "when": "resourceExtname == .if"
+          "when": "resourceExtname == .if || resourceExtname == .card"
         },
         {
           "command": "if-scvm.convertFinance",
           "group": "ifscvm@3",
-          "when": "resourceExtname == .if"
+          "when": "resourceExtname == .if || resourceExtname == .card"
         },
         {
           "command": "if-scvm.selectDataFile",
@@ -66,17 +66,17 @@
       "editor/context": [
         {
           "command": "if-scvm.run",
-          "when": "resourceExtname == .if",
+          "when": "resourceExtname == .if || resourceExtname == .card",
           "group": "ifscvm@1"
         },
         {
           "command": "if-scvm.convertTelecom",
-          "when": "resourceExtname == .if",
+          "when": "resourceExtname == .if || resourceExtname == .card",
           "group": "ifscvm@2"
         },
         {
           "command": "if-scvm.convertFinance",
-          "when": "resourceExtname == .if",
+          "when": "resourceExtname == .if || resourceExtname == .card",
           "group": "ifscvm@3"
         }
       ]
@@ -139,7 +139,8 @@
           "if"
         ],
         "extensions": [
-          ".if"
+          ".if",
+          ".card"
         ],
         "configuration": "./language-configuration.json"
       }

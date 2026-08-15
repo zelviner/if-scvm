@@ -207,6 +207,7 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.window.showErrorMessage('Save the script before converting it');
 			return;
 		}
+		const documentVersion = document?.version;
 
 		output.clear();
 		output.show(true);
@@ -215,36 +216,92 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const args = ['--json', '--script', uri.fsPath, flag, 'true'];
 		output.appendLine('[INFO] args: ' + JSON.stringify(args));
-		const child = spawn(exePath, args);
-		let stdout = '';
-
-		child.stdout.on('data', buffer => { stdout += buffer.toString(); });
-		child.stderr.on('data', buffer => { output.appendLine('[STDERR] ' + buffer.toString()); });
-		child.on('error', error => {
-			output.appendLine(`[ERROR] ${error.message}`);
+		let conversion: { code: number | null; stdout: string };
+		try {
+			conversion = await vscode.window.withProgress(
+				{
+					location: vscode.ProgressLocation.Notification,
+					title: `Converting ${label} script...`,
+					cancellable: false
+				},
+				async () => await runConversion(args)
+			);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			output.appendLine(`[ERROR] ${message}`);
 			vscode.window.showErrorMessage(`${label} script conversion failed`);
-		});
-		child.on('close', code => {
-			for (const line of stdout.split(/\r?\n/)) {
-				if (!line.trim()) {
-					continue;
-				}
+			return;
+		}
 
-				try {
-					const result = JSON.parse(line) as { type?: string; message?: string };
-					output.appendLine(`[${(result.type ?? 'info').toUpperCase()}] ${result.message ?? line}`);
-				} catch {
-					output.appendLine(line);
-				}
+		appendConversionOutput(conversion.stdout);
+		output.appendLine(`[INFO] process exit: ${conversion.code}`);
+		if (conversion.code !== 0) {
+			vscode.window.showErrorMessage(`${label} script conversion failed`);
+			return;
+		}
+
+		try {
+			if (!await refreshConvertedDocument(uri, documentVersion)) {
+				vscode.window.showWarningMessage(`${label} script converted, but the editor has unsaved changes and was not refreshed`);
+				return;
+			}
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			output.appendLine(`[ERROR] refresh converted script: ${message}`);
+			vscode.window.showWarningMessage(`${label} script converted, but failed to refresh the editor`);
+			return;
+		}
+
+		vscode.window.showInformationMessage(`${label} script converted`);
+	}
+
+	function runConversion(args: string[]): Promise<{ code: number | null; stdout: string }> {
+		return new Promise((resolve, reject) => {
+			const child = spawn(exePath, args);
+			let stdout = '';
+			child.stdout.on('data', buffer => { stdout += buffer.toString(); });
+			child.stderr.on('data', buffer => { output.appendLine('[STDERR] ' + buffer.toString()); });
+			child.once('error', reject);
+			child.once('close', code => { resolve({ code, stdout }); });
+		});
+	}
+
+	function appendConversionOutput(stdout: string): void {
+		for (const line of stdout.split(/\r?\n/)) {
+			if (!line.trim()) {
+				continue;
 			}
 
-			output.appendLine(`[INFO] process exit: ${code}`);
-			if (code === 0) {
-				vscode.window.showInformationMessage(`${label} script converted`);
-			} else {
-				vscode.window.showErrorMessage(`${label} script conversion failed`);
+			try {
+				const result = JSON.parse(line) as { type?: string; message?: string };
+				output.appendLine(`[${(result.type ?? 'info').toUpperCase()}] ${result.message ?? line}`);
+			} catch {
+				output.appendLine(line);
 			}
-		});
+		}
+	}
+
+	async function refreshConvertedDocument(uri: vscode.Uri, expectedVersion: number | undefined): Promise<boolean> {
+		const document = vscode.workspace.textDocuments.find(item => item.uri.toString() === uri.toString());
+		if (!document) {
+			return true;
+		}
+		if (document.version !== expectedVersion || document.isDirty) {
+			return false;
+		}
+
+		const convertedText = new TextDecoder('utf-8').decode(await vscode.workspace.fs.readFile(uri));
+		if (convertedText === document.getText()) {
+			return true;
+		}
+
+		const edit = new vscode.WorkspaceEdit();
+		const lastLine = document.lineCount - 1;
+		edit.replace(uri, new vscode.Range(0, 0, lastLine, document.lineAt(lastLine).text.length), convertedText);
+		if (!await vscode.workspace.applyEdit(edit)) {
+			throw new Error('VS Code rejected the converted script update');
+		}
+		return await document.save();
 	}
 
 	const convertTelecomCmd = vscode.commands.registerCommand(
