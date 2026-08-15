@@ -59,7 +59,8 @@ export function formatCardScript(source: string, eol = '\n'): string {
 		return block.kind;
 	}
 
-	for (const line of lines) {
+	for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+		const line = lines[lineIndex];
 		const parts = splitLine(line, inBlockComment);
 		inBlockComment = parts.continuesBlockComment;
 		const code = parts.code.trim();
@@ -77,6 +78,9 @@ export function formatCardScript(source: string, eol = '\n'): string {
 		const groupEvents = groupsIn(code);
 		let eventIndex = 0;
 		let lineIndent = indent;
+		if (!code && comment.startsWith('//') && lineCommentPrecedesCase(lines, lineIndex)) {
+			lineIndent = Math.max(indent - 1, 0);
+		}
 
 		while (eventIndex < groupEvents.length && isLeadingCloseGroup(code, groupEvents[eventIndex])) {
 			const block = blocks.at(-1);
@@ -334,6 +338,17 @@ function lineCommentIndex(line: string): number {
 		}
 	}
 	return -1;
+}
+
+function lineCommentPrecedesCase(lines: string[], start: number): boolean {
+	for (let index = start + 1; index < lines.length; index += 1) {
+		const line = lines[index].trim();
+		if (!line || line.startsWith('//')) {
+			continue;
+		}
+		return /^(case\b|default\s*:)/.test(line);
+	}
+	return false;
 }
 
 function formatCode(code: string): string {

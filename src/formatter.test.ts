@@ -35,3 +35,8 @@ assert.equal(
 	formatCardScript('dgi_9102_data=[{\n"tag":"A5",\n"children":[{\n"tag":"BF0C",\n"children":[{\n"tag":"61",\n"children":[\n{"tag":"4F","value":"A0000000031010"},\n{"tag":"50","value":"564953412044454249544F"},\n{"tag":"87","value":"01"},\n{"tag":"9F12","value":"564953412044454249544F"}\n]\n}]\n}]\n}]'),
 	'dgi_9102_data = [{\n    "tag": "A5",\n    "children": [{\n        "tag": "BF0C",\n        "children": [{\n            "tag": "61",\n            "children": [\n                {"tag": "4F", "value": "A0000000031010"},\n                {"tag": "50", "value": "564953412044454249544F"},\n                {"tag": "87", "value": "01"},\n                {"tag": "9F12", "value": "564953412044454249544F"}\n            ]\n        }]\n    }]\n}]'
 );
+
+assert.equal(
+	formatCardScript('switch diversify {\n\n// CPG202 Diversification\ncase "CPG202": {\nstatic_enc = crypto.cipher("des-ede", "0000", master_key, null, 1)\nbreak\n}\n}'),
+	'switch diversify {\n\n// CPG202 Diversification\ncase "CPG202": {\n    static_enc = crypto.cipher("des-ede", "0000", master_key, null, 1)\n    break\n}\n}'
+);
