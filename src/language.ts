@@ -43,6 +43,7 @@ const valueEntries: LanguageEntry[] = [
 
 const functionEntries: LanguageEntry[] = [
 	entry('print', 'print(...values)', 'Write values to the script output.', ['...values']),
+	entry('format', 'format(template, ...values)', 'Format values with fmt positional syntax and return the resulting string.', ['template', '...values']),
 	entry('type', 'type(value)', 'Return the runtime type name.', ['value']),
 	entry('len', 'len(value)', 'Return the length of a string, list, or hash.', ['value']),
 	entry('int', 'int(value, base = 10)', 'Convert a value to an integer.', ['value', 'base']),

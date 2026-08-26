@@ -93,7 +93,7 @@
     },
     "builtins": {
       "patterns": [
-        { "name": "support.function.builtin.if", "match": "\\b(print|type|len|int|float|str|exit|panic|sleep)\\b(?=\\s*\\()" },
+        { "name": "support.function.builtin.if", "match": "\\b(print|format|type|len|int|float|str|exit|panic|sleep)\\b(?=\\s*\\()" },
         { "name": "support.class.builtin.if", "match": "\\b(crypto|tlv|data)\\b" }
       ]
     },
