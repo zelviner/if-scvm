@@ -36,9 +36,9 @@ const valueEntries: LanguageEntry[] = [
 	})),
 	{ label: 'RST', detail: 'card reset operation', documentation: 'Reset the card and return its ATR.', kind: vscode.CompletionItemKind.Constant },
 	{ label: 'PPS', detail: 'PPS operation', documentation: 'Perform protocol and parameter selection.', kind: vscode.CompletionItemKind.Constant },
-	{ label: 'crypto', detail: 'cryptography built-in object', documentation: 'Cryptography helper methods.', kind: vscode.CompletionItemKind.Module },
-	{ label: 'tlv', detail: 'BER-TLV built-in object', documentation: 'BER-TLV parsing and lookup helpers.', kind: vscode.CompletionItemKind.Module },
-	{ label: 'data', detail: 'perso data built-in object', documentation: 'Perso data parsing helpers.', kind: vscode.CompletionItemKind.Module }
+	{ label: 'Crypto', detail: 'cryptography built-in object', documentation: 'Cryptography helper methods.', kind: vscode.CompletionItemKind.Module },
+	{ label: 'Tlv', detail: 'BER-TLV built-in object', documentation: 'BER-TLV parsing and lookup helpers.', kind: vscode.CompletionItemKind.Module },
+	{ label: 'PersoData', detail: 'perso data built-in object', documentation: 'Perso data parsing helpers.', kind: vscode.CompletionItemKind.Module }
 ];
 
 const functionEntries: LanguageEntry[] = [
@@ -55,21 +55,21 @@ const functionEntries: LanguageEntry[] = [
 ];
 
 const objectEntries: Record<string, LanguageEntry[]> = {
-	crypto: [
-		entry('randomHex', 'crypto.randomHex(length)', 'Generate random bytes as an uppercase hexadecimal string.', ['length']),
-		entry('cipher', 'crypto.cipher(type, data, key, iv, op)', 'Run a supported 3DES or AES cipher operation.', ['type', 'data', 'key', 'iv', 'op']),
-		entry('TDesMac', 'crypto.TDesMac(data, key, ivec)', 'Calculate a PBOC 3DES MAC.', ['data', 'key', 'ivec']),
-		entry('aesCbcMac', 'crypto.aesCbcMac(data, key)', 'Calculate an AES CBC-MAC.', ['data', 'key']),
-		entry('aesCmac', 'crypto.aesCmac(data, key)', 'Calculate an AES-CMAC.', ['data', 'key']),
-		entry('milenage', 'crypto.milenage(ki, opc, rand, sqn, amf)', 'Run the Milenage authentication algorithms.', ['ki', 'opc', 'rand', 'sqn', 'amf'])
+	Crypto: [
+		entry('randomHex', 'Crypto.randomHex(length)', 'Generate random bytes as an uppercase hexadecimal string.', ['length']),
+		entry('cipher', 'Crypto.cipher(type, data, key, iv, op)', 'Run a supported 3DES or AES cipher operation.', ['type', 'data', 'key', 'iv', 'op']),
+		entry('tDesMac', 'Crypto.tDesMac(data, key, ivec)', 'Calculate a PBOC 3DES MAC.', ['data', 'key', 'ivec']),
+		entry('aesCbcMac', 'Crypto.aesCbcMac(data, key)', 'Calculate an AES CBC-MAC.', ['data', 'key']),
+		entry('aesCmac', 'Crypto.aesCmac(data, key)', 'Calculate an AES-CMAC.', ['data', 'key']),
+		entry('milenage', 'Crypto.milenage(ki, opc, rand, sqn, amf)', 'Run the Milenage authentication algorithms.', ['ki', 'opc', 'rand', 'sqn', 'amf'])
 	],
-	tlv: [
-		entry('parse', 'tlv.parse(hex)', 'Parse BER-TLV hexadecimal data.', ['hex']),
-		entry('serialize', 'tlv.serialize(nodes)', 'Encode TLV nodes as BER-TLV hexadecimal data.', ['nodes']),
-		entry('find', 'tlv.find(nodes, tag)', 'Find the first matching tag recursively.', ['nodes', 'tag'])
+	Tlv: [
+		entry('parse', 'Tlv.parse(hex)', 'Parse BER-TLV hexadecimal data.', ['hex']),
+		entry('serialize', 'Tlv.serialize(nodes)', 'Encode TLV nodes as BER-TLV hexadecimal data.', ['nodes']),
+		entry('find', 'Tlv.find(nodes, tag)', 'Find the first matching tag recursively.', ['nodes', 'tag'])
 	],
-	data: [
-		entry('parse', 'data.parse(hex)', 'Parse hexadecimal perso data into a hash of fields.', ['hex'])
+	PersoData: [
+		entry('parse', 'PersoData.parse(hex)', 'Parse hexadecimal perso data into a hash of fields.', ['hex'])
 	]
 };
 

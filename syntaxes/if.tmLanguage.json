@@ -94,14 +94,14 @@
     "builtins": {
       "patterns": [
         { "name": "support.function.builtin.if", "match": "\\b(print|format|type|len|int|float|str|exit|panic|sleep)\\b(?=\\s*\\()" },
-        { "name": "support.class.builtin.if", "match": "\\b(crypto|tlv|data)\\b" }
+        { "name": "support.class.builtin.if", "match": "\\b(Crypto|Tlv|PersoData)\\b" }
       ]
     },
     "methods": {
       "patterns": [
         {
           "name": "support.function.method.if",
-          "match": "(?<=\\.)\\b(randomHex|cipher|TDesMac|aesCbcMac|aesCmac|milenage|parse|serialize|find|len|upper|lower|split|index|prefix|suffix|trim|repeat|replace|mid|xor|toHexString|toAsciiString|append|pop|shift|insert|remove|clear|extend|join|json|copy|has|get|set|keys|values|update)\\b(?=\\s*\\()"
+          "match": "(?<=\\.)\\b(randomHex|cipher|tDesMac|aesCbcMac|aesCmac|milenage|parse|serialize|find|len|upper|lower|split|index|prefix|suffix|trim|repeat|replace|mid|xor|toHexString|toAsciiString|append|pop|shift|insert|remove|clear|extend|join|json|copy|has|get|set|keys|values|update)\\b(?=\\s*\\()"
         },
         { "name": "variable.other.property.if", "match": "(?<=\\.)\\b[A-Za-z_][A-Za-z0-9_]*\\b" }
       ]

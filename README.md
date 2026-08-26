@@ -763,19 +763,19 @@ if config.has("enabled") {
 
 哈希表的遍历顺序和 `keys()`、`values()` 返回顺序不应被视为稳定的插入顺序。
 
-## `crypto` 内置对象
+## `Crypto` 内置对象
 
 所有数据、密钥、IV 和结果均使用十六进制字符串表示。底层算法不会为 `cipher` 自动添加填充，调用者必须提供符合分组长度要求的数据。
 
-### `crypto.randomHex(length)`
+### `Crypto.randomHex(length)`
 
 生成指定字节数的随机数据，并返回大写十六进制字符串。
 
 ```card-script
-challenge = crypto.randomHex(8)
+challenge = Crypto.randomHex(8)
 ```
 
-### `crypto.cipher(type, data, key, iv, op)`
+### `Crypto.cipher(type, data, key, iv, op)`
 
 执行 3DES 或 AES 加解密。
 
@@ -805,7 +805,7 @@ aes-256-cbc
 | AES | 加密 | 解密 |
 
 ```card-script
-aes_cipher = crypto.cipher(
+aes_cipher = Crypto.cipher(
     "aes-128-cbc",
     "00112233445566778899AABBCCDDEEFF",
     "000102030405060708090A0B0C0D0E0F",
@@ -814,23 +814,23 @@ aes_cipher = crypto.cipher(
 )
 ```
 
-### `crypto.TDesMac(data, key, ivec)`
+### `Crypto.tDesMac(data, key, ivec)`
 
 计算 PBOC 3DES MAC，三个参数均为十六进制字符串。
 
 ```card-script
-mac = crypto.TDesMac(data, key, "0000000000000000")
+mac = Crypto.tDesMac(data, key, "0000000000000000")
 ```
 
-### `crypto.aesCbcMac(data, key)`
+### `Crypto.aesCbcMac(data, key)`
 
 计算 AES CBC-MAC，返回十六进制字符串。
 
-### `crypto.aesCmac(data, key)`
+### `Crypto.aesCmac(data, key)`
 
 计算 AES-CMAC，返回十六进制字符串。
 
-### `crypto.milenage(ki, opc, rand, sqn, amf)`
+### `Crypto.milenage(ki, opc, rand, sqn, amf)`
 
 执行 Milenage 全量计算。所有参数均为十六进制字符串，返回哈希表：
 
@@ -846,9 +846,9 @@ mac = crypto.TDesMac(data, key, "0000000000000000")
 }
 ```
 
-## `tlv` 内置对象
+## `Tlv` 内置对象
 
-### `tlv.parse(hex)`
+### `Tlv.parse(hex)`
 
 解析 BER-TLV 十六进制字符串，返回 TLV 对象列表。每个对象包含：
 
@@ -860,11 +860,11 @@ mac = crypto.TDesMac(data, key, "0000000000000000")
 | `children` | 列表 | 构造型 TLV 的子节点；没有子节点时字段不存在 |
 
 ```card-script
-nodes = tlv.parse("6F098407A0000000031010")
+nodes = Tlv.parse("6F098407A0000000031010")
 print(nodes.json())
 ```
 
-### `tlv.serialize(nodes)`
+### `Tlv.serialize(nodes)`
 
 将 TLV 对象列表编码为 BER-TLV 十六进制字符串。输入结构与 `tlv.parse` 的返回值兼容；`length` 会根据实际编码内容重新计算，无需也不会使用传入值。
 
@@ -880,25 +880,25 @@ nodes = [{
     ]
 }]
 
-encoded = tlv.serialize(nodes)
+encoded = Tlv.serialize(nodes)
 print(encoded) // "E1059F33021234"
 ```
 
-### `tlv.find(nodes, tag)`
+### `Tlv.find(nodes, tag)`
 
 深度优先搜索 TLV 列表及其 `children`，返回第一个 Tag 匹配的哈希表；不存在时返回 `null`。
 
 ```card-script
-nodes = tlv.parse(fci)
-aid = tlv.find(nodes, "84")
+nodes = Tlv.parse(fci)
+aid = Tlv.find(nodes, "84")
 if aid != null {
     print(aid.value)
 }
 ```
 
-## `data` 内置对象
+## `PersoData` 内置对象
 
-### `data.parse(hex)`
+### `PersoData.parse(hex)`
 
 将十六进制字符串中的字段数据解析为哈希表。输入字节从第一个 `0x00` 开始会被视为填充并忽略；有效内容可以是以下两种形式：
 
@@ -909,7 +909,7 @@ if aid != null {
 
 ```card-script
 // {"message":"[Head]V1.0[KEY01]XXX[CRC]0C43"}，末尾含 0x00 填充
-parsed = data.parse("7B226D657373616765223A225B486561645D56312E305B4B455930315D5858585B4352435D30433433227D00000000")
+parsed = PersoData.parse("7B226D657373616765223A225B486561645D56312E305B4B455930315D5858585B4352435D30433433227D00000000")
 
 print(parsed.Head, parsed.KEY01, parsed.CRC) // "V1.0 XXX 0C43"
 ```
